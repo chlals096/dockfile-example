@@ -1,0 +1,114 @@
+pipeline 
+{
+    agent any
+    triggers 
+    {
+        githubPush()
+    }
+    options 
+    {
+        timestamps()
+    }
+    stages
+    {
+        stage('Github Clone & Checkout')
+        {
+            steps
+            {
+                git branch: 'main',
+                    url: 'https://github.com/chlals096/dockfile-example.git',
+                    credentialsId: 'dock-example-github'
+            }
+        }
+        stage('Apache Build')
+        {
+            steps
+            {
+                script 
+                {   
+                    // Dockeer Hub에 로그인하기 위해 사용, Dockerhub 주소와 CredentialID기입
+                    docker.withRegistry('https://index.docker.io/v1/', 'docker-hub') 
+                    {
+                        // Dockerfile로 이미지 생성
+                        docker.build('chlals096/apache-test', './ubuntu_apache2') 
+                    }
+                }
+            }
+            
+        }
+        stage('nginx Build')
+        {
+            steps
+            {
+                script 
+                {   
+                    // Dockeer Hub에 로그인하기 위해 사용, Dockerhub 주소와 CredentialID기입
+                    docker.withRegistry('https://index.docker.io/v1/', 'docker-hub') 
+                    {
+                        // Dockerfile로 이미지 생성
+                        docker.build('chlals096/nginx-test', './ubuntu_nginx') 
+                    }
+                }
+            }
+            
+        }
+        stage('LB Build')
+        {
+            steps
+            {
+                script 
+                {   
+                    // Dockeer Hub에 로그인하기 위해 사용, Dockerhub 주소와 CredentialID기입
+                    docker.withRegistry('https://index.docker.io/v1/', 'docker-hub') 
+                    {
+                        // Dockerfile로 이미지 생성
+                        docker.build('chlals096/loadbalacer-test', './ubuntu_nginx_loadbalancer') 
+                    }
+                }
+            }
+            
+        }
+        stage ('Docker Image Push')
+        {
+            steps
+            {
+                script 
+                {   
+                    // Dockeer Hub에 로그인하기 위해 사용, Dockerhub 주소와 CredentialID기입
+                    docker.withRegistry('https://index.docker.io/v1/', 'docker-hub') 
+                    {
+                        def apache_img = docker.image('chlals096/apache-test')  // 이미지 선택  
+                        apache_img.push('latest')  
+                    }
+                }
+                script
+                {   
+                    docker.withRegistry('https://index.docker.io/v1/', 'docker-hub') 
+                    {
+                        def nginx_img = docker.image('chlals096/nginx-test')
+                        nginx_img.push('latest')   
+                    }   
+                }
+                script
+                {
+                    docker.withRegistry('https://index.docker.io/v1/', 'docker-hub') 
+                    {
+                        def LB_img = docker.image('chlals096/loadbalacer-test')
+                        LB_img.push('latest') 
+                    }   
+                }
+                
+            }
+        }
+    }
+    post    // notification 설정
+    {
+        cleanup
+        {
+            emailext subject: '$DEFAULT_SUBJECT',
+                    to: 'chlals096@gmail.com',
+                    body: '$DEFAULT_CONTENT'
+            cleanWs() // 작업영역 삭제
+        }
+    }
+}
