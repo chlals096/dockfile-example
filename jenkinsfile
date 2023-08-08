@@ -95,7 +95,7 @@ pipeline
                     {
                         def LB_img = docker.image('chlals096/loadbalacer-test')
                         LB_img.push('latest')
-                        LB_img.push('latest')
+                        LB_img.push('0.2')
                     }   
                 }
                 
