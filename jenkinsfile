@@ -94,7 +94,8 @@ pipeline
                     docker.withRegistry('https://index.docker.io/v1/', 'docker-hub') 
                     {
                         def LB_img = docker.image('chlals096/loadbalacer-test')
-                        LB_img.push('latest') 
+                        LB_img.push('latest')
+                        LB_img.push('latest')
                     }   
                 }
                 
